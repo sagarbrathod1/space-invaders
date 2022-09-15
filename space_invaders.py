@@ -15,6 +15,8 @@ pygame.display.set_caption("Space Invaders")
 # define game variables
 rows = 5
 cols = 5
+last_alien_shot = pygame.time.get_ticks()
+alien_cooldown = 1000 # milliseconds
 
 # define colors
 red = (255, 0, 0)
@@ -30,6 +32,7 @@ def draw_background():
 spaceship_group = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
 alien_group = pygame.sprite.Group()
+alien_bullet_group = pygame.sprite.Group()
 
 # creating the spaceship
 class Spaceship(pygame.sprite.Sprite):
@@ -104,14 +107,27 @@ class Aliens(pygame.sprite.Sprite):
 def create_aliens():
     for row in range(rows):
         for item in range(cols):
-            alien = Aliens(100 + item * 100, 100 + row * 70)
+            alien = Aliens((100 + item * 100), (100 + row * 70))
             alien_group.add(alien)
 
 # calling function to generate aliens
 create_aliens()
 
+# creating the alien bullets
+class AlienBullets(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load("assets/alien_bullet.png")
+        self.rect = self.image.get_rect()
+        self.rect.center = [x, y]
+    
+    def update(self):
+        self.rect.y += 2
+        if self.rect.top > screen_height:
+            self.kill()
+
 # creating the player
-spaceship = Spaceship(int(screen_width / 2), screen_height - 100, 3)
+spaceship = Spaceship(int(screen_width / 2), (screen_height - 100), 3)
 spaceship_group.add(spaceship)
 
 run = True
@@ -121,6 +137,15 @@ while run:
 
     # drawing the background
     draw_background()
+
+    # creating random alien bullets
+    time_current = pygame.time.get_ticks()
+    # shooting
+    if (time_current - last_alien_shot) > alien_cooldown and len(alien_bullet_group) < 5 and len(alien_group) > 0:
+        attacking_alien = random.choice(alien_group.sprites())
+        alien_bullet = AlienBullets(attacking_alien.rect.centerx, attacking_alien.rect.bottom)
+        alien_bullet_group.add(alien_bullet)
+        last_alien_shot = time_current
 
     # event handlers
     for event in pygame.event.get():
@@ -133,11 +158,13 @@ while run:
     # updating the sprite groups
     bullet_group.update()
     alien_group.update()
+    alien_bullet_group.update()
 
     # drawing the sprite groups
     spaceship_group.draw(screen)
     bullet_group.draw(screen)
     alien_group.draw(screen)
+    alien_bullet_group.draw(screen)
 
     pygame.display.update()
 
