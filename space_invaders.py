@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+import random
 
 # define fps
 clock = pygame.time.Clock()
@@ -11,15 +12,24 @@ screen_height = 800
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Space Invaders")
 
+# define game variables
+rows = 5
+cols = 5
+
 # define colors
 red = (255, 0, 0)
 green = (0, 255, 0)
 
-# load background image
+# loading the background image
 background = pygame.image.load("assets/space_background.png")
 
 def draw_background():
     screen.blit(background, (0, 0))
+
+# creating sprite groups
+spaceship_group = pygame.sprite.Group()
+bullet_group = pygame.sprite.Group()
+alien_group = pygame.sprite.Group()
 
 # creating the spaceship
 class Spaceship(pygame.sprite.Sprite):
@@ -39,7 +49,7 @@ class Spaceship(pygame.sprite.Sprite):
         # setting cooldown variable (milliseconds)
         cooldown = 500
 
-        # obtain key press
+        # obtaining key press
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT] and self.rect.left > 0:
             self.rect.x -= speed
@@ -55,7 +65,7 @@ class Spaceship(pygame.sprite.Sprite):
             bullet_group.add(bullet)
             self.last_shot = time_current
 
-        # draw the health bar
+        # drawing the health bar
         pygame.draw.rect(screen, red, (self.rect.x, (self.rect.bottom + 10), self.rect.width, 15))
         if self.health_remain > 0:
             pygame.draw.rect(screen, green, (self.rect.x, (self.rect.bottom + 10), int(self.rect.width * (self.health_remain / self.health_start)), 15))
@@ -73,9 +83,32 @@ class Bullets(pygame.sprite.Sprite):
         if self.rect.bottom < 0:
             self.kill()
 
-# creating sprite groups
-spaceship_group = pygame.sprite.Group()
-bullet_group = pygame.sprite.Group()
+# creating the aliens
+class Aliens(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load("assets/alien" + str(random.randint(1, 5)) + ".png")
+        self.rect = self.image.get_rect()
+        self.rect.center = [x, y]
+        self.move_counter = 0
+        self.move_dir = 1
+    
+    def update(self):
+        self.rect.x += self.move_dir
+        self.move_counter += 1
+        if abs(self.move_counter) > 75:
+            self.move_dir *= -1
+            self.move_counter *= self.move_dir
+
+# generating aliens
+def create_aliens():
+    for row in range(rows):
+        for item in range(cols):
+            alien = Aliens(100 + item * 100, 100 + row * 70)
+            alien_group.add(alien)
+
+# calling function to generate aliens
+create_aliens()
 
 # creating the player
 spaceship = Spaceship(int(screen_width / 2), screen_height - 100, 3)
@@ -83,7 +116,6 @@ spaceship_group.add(spaceship)
 
 run = True
 while run:
-
     # frame rate
     clock.tick(fps)
 
@@ -95,15 +127,17 @@ while run:
         if event.type == pygame.QUIT:
             run = False
 
-    # update the spaceship
+    # updating the spaceship
     spaceship.update()
 
-    # update the sprite groups
+    # updating the sprite groups
     bullet_group.update()
+    alien_group.update()
 
-    # draw the sprite groups
+    # drawing the sprite groups
     spaceship_group.draw(screen)
     bullet_group.draw(screen)
+    alien_group.draw(screen)
 
     pygame.display.update()
 
