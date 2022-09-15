@@ -1,3 +1,4 @@
+from turtle import fd
 import pygame
 from pygame.locals import *
 import random
@@ -68,6 +69,9 @@ class Spaceship(pygame.sprite.Sprite):
             bullet_group.add(bullet)
             self.last_shot = time_current
 
+        # updating masks
+        self.mask = pygame.mask.from_surface(self.image)
+
         # drawing the health bar
         pygame.draw.rect(screen, red, (self.rect.x, (self.rect.bottom + 10), self.rect.width, 15))
         if self.health_remain > 0:
@@ -84,6 +88,8 @@ class Bullets(pygame.sprite.Sprite):
     def update(self):
         self.rect.y -= 5
         if self.rect.bottom < 0:
+            self.kill()
+        if pygame.sprite.spritecollide(self, alien_group, True):
             self.kill()
 
 # creating the aliens
@@ -125,6 +131,10 @@ class AlienBullets(pygame.sprite.Sprite):
         self.rect.y += 2
         if self.rect.top > screen_height:
             self.kill()
+        if pygame.sprite.spritecollide(self, spaceship_group, False, pygame.sprite.collide_mask):
+            self.kill()
+            # reducing spaceship health
+            spaceship.health_remain -= 1
 
 # creating the player
 spaceship = Spaceship(int(screen_width / 2), (screen_height - 100), 3)
@@ -140,7 +150,6 @@ while run:
 
     # creating random alien bullets
     time_current = pygame.time.get_ticks()
-    # shooting
     if (time_current - last_alien_shot) > alien_cooldown and len(alien_bullet_group) < 5 and len(alien_group) > 0:
         attacking_alien = random.choice(alien_group.sprites())
         alien_bullet = AlienBullets(attacking_alien.rect.centerx, attacking_alien.rect.bottom)
