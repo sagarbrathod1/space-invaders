@@ -8,7 +8,7 @@ The player controls a spaceship to defeat AI enemies. Make sure to not take too 
 
 Simply download the repository and run the Python file.
 
-From terminal:
+In terminal:
 
 `git clone https://github.com/sagarbrathod1/space-invaders.git` 
 
